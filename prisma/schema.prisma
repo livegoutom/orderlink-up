@@ -1,0 +1,91 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Note that some adapters may set a maximum length for the String type by default, please ensure your strings are long
+// enough when changing adapters.
+// See https://www.prisma.io/docs/orm/reference/prisma-schema-reference#string for more information
+datasource db {
+  provider = "sqlite"
+  url      = "file:dev.sqlite"
+}
+
+model Session {
+  id                  String    @id
+  shop                String
+  state               String
+  isOnline            Boolean   @default(false)
+  scope               String?
+  expires             DateTime?
+  accessToken         String
+  userId              BigInt?
+  firstName           String?
+  lastName            String?
+  email               String?
+  accountOwner        Boolean   @default(false)
+  locale              String?
+  collaborator        Boolean?  @default(false)
+  emailVerified       Boolean?  @default(false)
+  refreshToken        String?
+  refreshTokenExpires DateTime?
+}
+
+model ImportTemplate {
+  id        String   @id @default(cuid())
+  shop      String
+  name      String
+  mapping   String // JSON: { targetField: sourceHeaderName }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([shop])
+}
+
+model ImportJob {
+  id                    String    @id @default(cuid())
+  shop                  String
+  fileName              String
+  fileType              String // "csv" | "xlsx"
+  status                String // "uploaded" | "mapped" | "validating" | "validated" | "processing" | "completed" | "failed" | "rolled_back"
+  headers               String // JSON array of original column headers, in column order
+  totalRows             Int
+  columnMapping         String? // JSON: { targetField: sourceHeaderName }, set when status >= "mapped"
+  orderMode             String? // "draft" | "paid"
+  suppressNotifications Boolean   @default(true)
+  options               String? // JSON OrderImportOptions (see app/lib/importOptions.server.ts)
+  templateId            String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  startedAt             DateTime?
+  completedAt           DateTime?
+
+  rows ImportRow[]
+
+  @@index([shop])
+}
+
+model ImportRow {
+  id                  String  @id @default(cuid())
+  importJobId         String
+  rowNumber           Int
+  rawData             String // JSON: array of cell values, indexed by original column order
+  status              String  @default("pending") // "pending" | "valid" | "error" | "skipped" | "imported"
+  errors              String? // JSON array of validation error messages
+  shopifyOrderId       String?
+  matchStatus          String  @default("pending") // "pending" | "matched" | "unmatched" | "custom_line_item" | "skipped"
+  matchType            String? // "sku" | "barcode" | "variantId" | "manual"
+  matchedVariantId     String? // gid://shopify/ProductVariant/...
+  matchedVariantTitle  String? // cached "Product - Variant" label for display
+  groupKey             String? // rows sharing a groupKey become line items of ONE Shopify order
+  validationStatus     String  @default("pending") // "pending" | "valid" | "error"
+  validationErrors     String? // JSON array of human-readable messages
+
+  importJob ImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+
+  @@index([importJobId])
+  @@index([importJobId, matchStatus])
+  @@index([importJobId, groupKey])
+}

@@ -1,0 +1,6 @@
+Order Number,Email,First Name,Last Name,Order Date,SKU,Product Title,Qty,Price,Shipping Address,City,Province,Zip,Country,Shipping Cost,Tax,Currency,Tags,Note
+#1001,jane@example.com,Jane,Doe,2024-01-15,ABC-123,Classic Tee - Blue / M,2,19.99,123 Main St,Springfield,IL,62704,US,5.00,3.20,USD,vip,Repeat customer
+#1001,jane@example.com,Jane,Doe,2024-01-15,XYZ-456,Canvas Tote Bag,1,14.50,123 Main St,Springfield,IL,62704,US,5.00,3.20,USD,vip,Repeat customer
+#1002,john@example.com,John,Smith,2024-01-16,ABC-789,Classic Tee - Black / L,1,19.99,456 Oak Ave,Shelbyville,IL,62565,US,5.00,1.60,USD,,
+#1003,sam@example.com,Sam,Lee,2024-01-18,DEF-111,Wool Beanie,3,12.00,789 Pine Rd,Capital City,IL,62701,US,0.00,2.88,USD,wholesale,Ships from warehouse B
+#1003,sam@example.com,Sam,Lee,2024-01-18,GHI-222,Leather Belt,1,29.99,789 Pine Rd,Capital City,IL,62701,US,0.00,2.88,USD,wholesale,Ships from warehouse B
