@@ -17,8 +17,17 @@ export async function checkHasActivePayment(admin: Admin, billing: Billing): Pro
   const classicResult = await billing.check({ plans: billingPlans(...UNLIMITED_PLANS), isTest: true });
   if (classicResult.hasActivePayment) return true;
 
-  const shopGid = await getShopGid(admin);
-  return hasActiveAppPricingSubscription(shopGid);
+  // The Partner API check is a best-effort supplement, not a required dependency - any failure
+  // here (network issue, shop GID lookup failure, malformed response) should fall back to "no
+  // active App Pricing subscription found" rather than crashing the whole page. The classic
+  // check above is already the source of truth for this app's own subscriptions.
+  try {
+    const shopGid = await getShopGid(admin);
+    return await hasActiveAppPricingSubscription(shopGid);
+  } catch (err) {
+    console.error("Partner API App Pricing check failed, falling back to classic billing only:", err);
+    return false;
+  }
 }
 
 /**
