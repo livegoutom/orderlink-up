@@ -14,22 +14,23 @@ import {
   ProgressBar,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { authenticate, UNLIMITED_PLANS, billingPlans } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 import { listImportJobs } from "../models/importJob.server";
 import {
+  checkHasActivePayment,
   countLifetimeImportedOrders,
   countLifetimeImportedRows,
   FREE_ORDER_LIMIT,
 } from "../models/billing.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session, billing } = await authenticate.admin(request);
+  const { session, admin, billing } = await authenticate.admin(request);
 
-  const [jobs, ordersUsed, rowsImported, billingCheck] = await Promise.all([
+  const [jobs, ordersUsed, rowsImported, hasActivePayment] = await Promise.all([
     listImportJobs(session.shop),
     countLifetimeImportedOrders(session.shop),
     countLifetimeImportedRows(session.shop),
-    billing.check({ plans: billingPlans(...UNLIMITED_PLANS), isTest: true }),
+    checkHasActivePayment(admin, billing),
   ]);
 
   return {
@@ -44,7 +45,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     totalImports: jobs.length,
     ordersUsed,
     rowsImported,
-    hasActivePayment: billingCheck.hasActivePayment,
+    hasActivePayment,
     limit: FREE_ORDER_LIMIT,
   };
 };

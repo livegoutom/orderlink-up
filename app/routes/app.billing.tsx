@@ -11,14 +11,17 @@ import {
   billingPlan,
   billingPlans,
 } from "../shopify.server";
-import { countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
+import { checkHasActivePayment, countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session, billing } = await authenticate.admin(request);
-  const { hasActivePayment, appSubscriptions } = await billing.check({
+  const { session, admin, billing } = await authenticate.admin(request);
+  // Classic Billing API check, kept separate from the combined check below because only a
+  // classic subscription (not a Shopify App Pricing one) can be cancelled via billing.cancel().
+  const { appSubscriptions } = await billing.check({
     plans: billingPlans(...UNLIMITED_PLANS),
     isTest: true,
   });
+  const hasActivePayment = await checkHasActivePayment(admin, billing);
   const ordersUsed = await countLifetimeImportedOrders(session.shop);
 
   const activeSubscription = appSubscriptions[0];
@@ -104,14 +107,21 @@ export default function BillingPage() {
             {hasActivePayment ? (
               <>
                 <Text as="p" variant="bodyMd" tone="subdued">
-                  You're on the Unlimited Orders plan (
-                  {subscription?.isAnnual ? "$150/year" : "$15/month"}) — no order limits.
+                  You're on the Unlimited Orders plan
+                  {subscription ? ` (${subscription.isAnnual ? "$150/year" : "$15/month"})` : ""} —
+                  no order limits.
                 </Text>
-                <InlineStack>
-                  <Button tone="critical" onClick={handleCancel} loading={isSubmitting}>
-                    Cancel subscription
-                  </Button>
-                </InlineStack>
+                {subscription ? (
+                  <InlineStack>
+                    <Button tone="critical" onClick={handleCancel} loading={isSubmitting}>
+                      Cancel subscription
+                    </Button>
+                  </InlineStack>
+                ) : (
+                  <Text as="p" variant="bodySm" tone="subdued">
+                    Manage or cancel this subscription from Shopify Admin.
+                  </Text>
+                )}
               </>
             ) : (
               <>

@@ -1,6 +1,25 @@
 import prisma from "../db.server";
+import { authenticate, UNLIMITED_PLANS, billingPlans } from "../shopify.server";
+import { getShopGid, hasActiveAppPricingSubscription } from "../lib/partnerBilling.server";
 
 export const FREE_ORDER_LIMIT = 25;
+
+type Admin = Awaited<ReturnType<typeof authenticate.admin>>["admin"];
+type Billing = Awaited<ReturnType<typeof authenticate.admin>>["billing"];
+
+/**
+ * Checks BOTH the classic Billing API (this app's own subscriptions, created via
+ * billing.request()) AND Shopify App Pricing (subscriptions merchants create through Shopify's
+ * own plan-selection UI, which do not appear in the classic API's response). See
+ * partnerBilling.server.ts for why both checks are required.
+ */
+export async function checkHasActivePayment(admin: Admin, billing: Billing): Promise<boolean> {
+  const classicResult = await billing.check({ plans: billingPlans(...UNLIMITED_PLANS), isTest: true });
+  if (classicResult.hasActivePayment) return true;
+
+  const shopGid = await getShopGid(admin);
+  return hasActiveAppPricingSubscription(shopGid);
+}
 
 /**
  * Distinct Shopify orders (draft or paid - both are real records the app created) ever

@@ -4,8 +4,8 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate, useRevalidator } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Button, Banner, ProgressBar, List } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { authenticate, UNLIMITED_PLANS, billingPlans } from "../shopify.server";
-import { countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
+import { authenticate } from "../shopify.server";
+import { checkHasActivePayment, countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
 import { getImportJob, markJobCreating } from "../models/importJob.server";
 import {
   getErrorGroups,
@@ -74,7 +74,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "prepare") {
-    const { hasActivePayment } = await billing.check({ plans: billingPlans(...UNLIMITED_PLANS), isTest: true });
+    const hasActivePayment = await checkHasActivePayment(admin, billing);
     if (!hasActivePayment) {
       const ordersUsed = await countLifetimeImportedOrders(session.shop);
       if (ordersUsed >= FREE_ORDER_LIMIT) {

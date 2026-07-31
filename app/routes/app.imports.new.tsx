@@ -26,8 +26,8 @@ import {
   Divider,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { authenticate, UNLIMITED_PLANS, billingPlans } from "../shopify.server";
-import { countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
+import { authenticate } from "../shopify.server";
+import { checkHasActivePayment, countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
 import { parseUploadedFile } from "../lib/fileParser.server";
 import { ORDER_FIELDS, type OrderFieldSection } from "../lib/orderFields.server";
 import {
@@ -234,7 +234,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "prepareOrders") {
     if (!job.columnMapping) return { intent, error: "Mapping not saved yet." };
 
-    const { hasActivePayment } = await billing.check({ plans: billingPlans(...UNLIMITED_PLANS), isTest: true });
+    const hasActivePayment = await checkHasActivePayment(admin, billing);
     if (!hasActivePayment) {
       const ordersUsed = await countLifetimeImportedOrders(session.shop);
       if (ordersUsed >= FREE_ORDER_LIMIT) {
