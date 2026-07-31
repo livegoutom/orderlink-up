@@ -6,6 +6,7 @@ import { Page, Card, BlockStack, InlineStack, Text, Button, Banner, ProgressBar,
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
 import { checkHasActivePayment, countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
+import { logAccess } from "../models/accessLog.server";
 import { getImportJob, markJobCreating } from "../models/importJob.server";
 import {
   getErrorGroups,
@@ -130,6 +131,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
           if (result.orderId) {
             await markGroupImported(job.id, groupKey, result.orderId);
+            await logAccess(session.shop, "order_created", result.orderId);
           } else {
             const message = result.userErrors.map((e) => e.message).join("; ") || "Order creation failed.";
             await markGroupError(job.id, groupKey, message);

@@ -34,6 +34,19 @@ model Session {
   refreshTokenExpires DateTime?
 }
 
+// Audit trail for events that read or write personal data contained in imported orders -
+// required for Shopify's Level 2 protected customer data access (name/email/phone/address).
+model AccessLog {
+  id        String   @id @default(cuid())
+  shop      String
+  action    String // "order_created" | "customer_data_request" | "customer_redact" | "shop_redact"
+  detail    String? // short human-readable context, e.g. a Shopify order GID
+  createdAt DateTime @default(now())
+
+  @@index([shop])
+  @@index([createdAt])
+}
+
 model ImportTemplate {
   id        String   @id @default(cuid())
   shop      String

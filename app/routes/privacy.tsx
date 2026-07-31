@@ -53,6 +53,10 @@ export default function PrivacyPolicy() {
       <h2 style={{ fontSize: 19, marginTop: 36 }}>Data retention and deletion</h2>
       <ul style={{ paddingLeft: 20 }}>
         <li>
+          Import records — including any personal data they contain — are automatically deleted
+          24 months after creation, or sooner if the merchant deletes them manually.
+        </li>
+        <li>
           Merchants can permanently delete any import's history at any time from the app's
           Activity page — this removes our stored record of that import, though it does not
           affect orders already created in Shopify.
@@ -64,13 +68,19 @@ export default function PrivacyPolicy() {
           the app is uninstalled) results in all of that shop's data being permanently deleted
           from our systems.
         </li>
+        <li>
+          We keep a minimal access log (which shop, what action, when — never the personal data
+          itself) for security accountability, including after the records above are deleted.
+        </li>
       </ul>
 
       <h2 style={{ fontSize: 19, marginTop: 36 }}>Security</h2>
       <p>
-        Data is transmitted over HTTPS. Access to the merchant's store is scoped to the minimum
-        permissions the app needs (product lookup, and order/draft order creation) and is
-        authenticated using Shopify's standard OAuth token flow.
+        Data is encrypted in transit (HTTPS) and at rest. Access to the merchant's store is
+        scoped to the minimum permissions the app needs (product lookup, and order/draft order
+        creation) and is authenticated using Shopify's standard OAuth token flow. Further detail
+        on our security and data-processing practices is available in our{" "}
+        <a href="/terms">Terms of Service &amp; Data Processing Agreement</a>.
       </p>
 
       <h2 style={{ fontSize: 19, marginTop: 36 }}>Changes to this policy</h2>

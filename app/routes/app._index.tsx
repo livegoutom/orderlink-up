@@ -22,9 +22,15 @@ import {
   countLifetimeImportedRows,
   FREE_ORDER_LIMIT,
 } from "../models/billing.server";
+import { purgeStaleImportJobs } from "../models/accessLog.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session, admin, billing } = await authenticate.admin(request);
+
+  // Opportunistic retention cleanup - no scheduler/cron infra exists, so this runs on a normal
+  // page load instead. Global (not scoped to this shop) since it's cheap and shop-agnostic.
+  // Never allowed to break the dashboard if it fails.
+  purgeStaleImportJobs().catch((err) => console.error("Retention cleanup failed:", err));
 
   const [jobs, ordersUsed, rowsImported, hasActivePayment] = await Promise.all([
     listImportJobs(session.shop),
