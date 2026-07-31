@@ -8,6 +8,13 @@ import {
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
 
+// Matches shopify.app.toml's `handle` - used to build the Shopify-hosted App Pricing plan
+// selection page URL (https://admin.shopify.com/store/{shop}/charges/{APP_HANDLE}/pricing_plans).
+// Since this app enabled Shopify App Pricing, the classic Billing API's billing.request() can no
+// longer create NEW charges ("Managed Pricing Apps cannot use the Billing API") - merchants must
+// be redirected to this hosted page instead. See app.billing.tsx.
+export const APP_HANDLE = "orderlink-up" as const;
+
 export const UNLIMITED_PLAN_MONTHLY = "Unlimited Orders Monthly" as const;
 export const UNLIMITED_PLAN_ANNUAL = "Unlimited Orders Annual" as const;
 export const UNLIMITED_PLANS = [UNLIMITED_PLAN_MONTHLY, UNLIMITED_PLAN_ANNUAL] as const;

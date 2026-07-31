@@ -2,6 +2,7 @@
 
 client_id = "3f42fcdb20fd0579980f6dbcc6991508"
 name = "OrderLink Up"
+handle = "orderlink-up"
 application_url = "https://orderlink-up-production.up.railway.app"
 embedded = true
 

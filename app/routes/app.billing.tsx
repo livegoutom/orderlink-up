@@ -3,14 +3,7 @@ import { redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Badge, Button, ProgressBar } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import {
-  authenticate,
-  UNLIMITED_PLAN_ANNUAL,
-  UNLIMITED_PLAN_MONTHLY,
-  UNLIMITED_PLANS,
-  billingPlan,
-  billingPlans,
-} from "../shopify.server";
+import { authenticate, APP_HANDLE, UNLIMITED_PLAN_ANNUAL, UNLIMITED_PLANS, billingPlans } from "../shopify.server";
 import { checkHasActivePayment, countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
@@ -41,18 +34,20 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { billing } = await authenticate.admin(request);
+  const { session, billing, redirect: shopifyRedirect } = await authenticate.admin(request);
   const formData = await request.formData();
   const intent = formData.get("intent");
 
   if (intent === "upgrade") {
-    const interval = formData.get("interval");
-    const plan = interval === "annual" ? UNLIMITED_PLAN_ANNUAL : UNLIMITED_PLAN_MONTHLY;
-    // isTest: true - development stores can't be charged real money regardless, but this must
-    // be a deliberate switch before a real production launch, not something left as-is silently.
-    await billing.request({ plan: billingPlan(plan), isTest: true });
-    // billing.request() always throws a redirect to Shopify's confirmation page; unreachable.
-    return null;
+    // This app has Shopify App Pricing enabled, which means the classic Billing API can no
+    // longer create NEW charges ("Managed Pricing Apps cannot use the Billing API") - merchants
+    // pick a plan on Shopify's own hosted page instead, which already offers both the monthly
+    // and yearly-discount options for this app's single "unlimited-orders" plan.
+    const storeHandle = session.shop.replace(".myshopify.com", "");
+    return shopifyRedirect(
+      `https://admin.shopify.com/store/${storeHandle}/charges/${APP_HANDLE}/pricing_plans`,
+      { target: "_top" },
+    );
   }
 
   if (intent === "cancel") {
@@ -72,10 +67,9 @@ export default function BillingPage() {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
-  const handleUpgrade = (interval: "monthly" | "annual") => {
+  const handleUpgrade = () => {
     const formData = new FormData();
     formData.append("intent", "upgrade");
-    formData.append("interval", interval);
     submit(formData, { method: "post" });
   };
 
@@ -130,12 +124,9 @@ export default function BillingPage() {
                   imports.
                 </Text>
                 <ProgressBar progress={progress} tone={ordersUsed >= limit ? "critical" : "primary"} />
-                <InlineStack gap="300">
-                  <Button variant="primary" onClick={() => handleUpgrade("monthly")} loading={isSubmitting}>
-                    Upgrade — $15/month
-                  </Button>
-                  <Button onClick={() => handleUpgrade("annual")} loading={isSubmitting}>
-                    Upgrade — $150/year (save $30)
+                <InlineStack>
+                  <Button variant="primary" onClick={handleUpgrade} loading={isSubmitting}>
+                    Upgrade — from $15/month
                   </Button>
                 </InlineStack>
               </>
