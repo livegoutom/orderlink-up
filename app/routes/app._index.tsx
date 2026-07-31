@@ -14,7 +14,7 @@ import {
   ProgressBar,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { authenticate, UNLIMITED_PLAN, billingPlans } from "../shopify.server";
+import { authenticate, UNLIMITED_PLANS, billingPlans } from "../shopify.server";
 import { listImportJobs } from "../models/importJob.server";
 import {
   countLifetimeImportedOrders,
@@ -29,7 +29,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     listImportJobs(session.shop),
     countLifetimeImportedOrders(session.shop),
     countLifetimeImportedRows(session.shop),
-    billing.check({ plans: billingPlans(UNLIMITED_PLAN), isTest: true }),
+    billing.check({ plans: billingPlans(...UNLIMITED_PLANS), isTest: true }),
   ]);
 
   return {
@@ -156,7 +156,7 @@ export default function Home() {
 
                 {hasActivePayment ? (
                   <Text as="p" variant="bodyMd" tone="subdued">
-                    Unlimited order imports — $15/month.
+                    Unlimited order imports.
                   </Text>
                 ) : (
                   <BlockStack gap="200">
@@ -169,7 +169,7 @@ export default function Home() {
 
                 <InlineStack>
                   <Button onClick={() => navigate("/app/billing")}>
-                    {hasActivePayment ? "Manage plan" : "Upgrade — $15/month"}
+                    {hasActivePayment ? "Manage plan" : "Upgrade — from $15/month"}
                   </Button>
                 </InlineStack>
               </BlockStack>

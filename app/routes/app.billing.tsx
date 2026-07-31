@@ -3,21 +3,34 @@ import { redirect } from "@remix-run/node";
 import { useLoaderData, useNavigation, useSubmit } from "@remix-run/react";
 import { Page, Card, BlockStack, InlineStack, Text, Badge, Button, ProgressBar } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { authenticate, UNLIMITED_PLAN, billingPlan, billingPlans } from "../shopify.server";
+import {
+  authenticate,
+  UNLIMITED_PLAN_ANNUAL,
+  UNLIMITED_PLAN_MONTHLY,
+  UNLIMITED_PLANS,
+  billingPlan,
+  billingPlans,
+} from "../shopify.server";
 import { countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session, billing } = await authenticate.admin(request);
   const { hasActivePayment, appSubscriptions } = await billing.check({
-    plans: billingPlans(UNLIMITED_PLAN),
+    plans: billingPlans(...UNLIMITED_PLANS),
     isTest: true,
   });
   const ordersUsed = await countLifetimeImportedOrders(session.shop);
 
+  const activeSubscription = appSubscriptions[0];
+
   return {
     hasActivePayment,
-    subscription: appSubscriptions[0]
-      ? { id: appSubscriptions[0].id, status: appSubscriptions[0].status }
+    subscription: activeSubscription
+      ? {
+          id: activeSubscription.id,
+          status: activeSubscription.status,
+          isAnnual: activeSubscription.name === UNLIMITED_PLAN_ANNUAL,
+        }
       : null,
     ordersUsed,
     limit: FREE_ORDER_LIMIT,
@@ -30,9 +43,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   const intent = formData.get("intent");
 
   if (intent === "upgrade") {
+    const interval = formData.get("interval");
+    const plan = interval === "annual" ? UNLIMITED_PLAN_ANNUAL : UNLIMITED_PLAN_MONTHLY;
     // isTest: true - development stores can't be charged real money regardless, but this must
     // be a deliberate switch before a real production launch, not something left as-is silently.
-    await billing.request({ plan: billingPlan(UNLIMITED_PLAN), isTest: true });
+    await billing.request({ plan: billingPlan(plan), isTest: true });
     // billing.request() always throws a redirect to Shopify's confirmation page; unreachable.
     return null;
   }
@@ -54,9 +69,10 @@ export default function BillingPage() {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
-  const handleUpgrade = () => {
+  const handleUpgrade = (interval: "monthly" | "annual") => {
     const formData = new FormData();
     formData.append("intent", "upgrade");
+    formData.append("interval", interval);
     submit(formData, { method: "post" });
   };
 
@@ -88,7 +104,8 @@ export default function BillingPage() {
             {hasActivePayment ? (
               <>
                 <Text as="p" variant="bodyMd" tone="subdued">
-                  You're on the Unlimited Orders plan ($15/month) — no order limits.
+                  You're on the Unlimited Orders plan (
+                  {subscription?.isAnnual ? "$150/year" : "$15/month"}) — no order limits.
                 </Text>
                 <InlineStack>
                   <Button tone="critical" onClick={handleCancel} loading={isSubmitting}>
@@ -103,9 +120,12 @@ export default function BillingPage() {
                   imports.
                 </Text>
                 <ProgressBar progress={progress} tone={ordersUsed >= limit ? "critical" : "primary"} />
-                <InlineStack>
-                  <Button variant="primary" onClick={handleUpgrade} loading={isSubmitting}>
+                <InlineStack gap="300">
+                  <Button variant="primary" onClick={() => handleUpgrade("monthly")} loading={isSubmitting}>
                     Upgrade — $15/month
+                  </Button>
+                  <Button onClick={() => handleUpgrade("annual")} loading={isSubmitting}>
+                    Upgrade — $150/year (save $30)
                   </Button>
                 </InlineStack>
               </>

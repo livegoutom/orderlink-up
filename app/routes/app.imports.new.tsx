@@ -26,7 +26,7 @@ import {
   Divider,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
-import { authenticate, UNLIMITED_PLAN, billingPlans } from "../shopify.server";
+import { authenticate, UNLIMITED_PLANS, billingPlans } from "../shopify.server";
 import { countLifetimeImportedOrders, FREE_ORDER_LIMIT } from "../models/billing.server";
 import { parseUploadedFile } from "../lib/fileParser.server";
 import { ORDER_FIELDS, type OrderFieldSection } from "../lib/orderFields.server";
@@ -234,7 +234,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
   if (intent === "prepareOrders") {
     if (!job.columnMapping) return { intent, error: "Mapping not saved yet." };
 
-    const { hasActivePayment } = await billing.check({ plans: billingPlans(UNLIMITED_PLAN), isTest: true });
+    const { hasActivePayment } = await billing.check({ plans: billingPlans(...UNLIMITED_PLANS), isTest: true });
     if (!hasActivePayment) {
       const ordersUsed = await countLifetimeImportedOrders(session.shop);
       if (ordersUsed >= FREE_ORDER_LIMIT) {
@@ -691,7 +691,7 @@ export default function NewImport() {
                   {limitReached && (
                     <InlineStack>
                       <Button variant="primary" onClick={() => navigate("/app/billing")}>
-                        Upgrade — $15/month
+                        Upgrade — from $15/month
                       </Button>
                     </InlineStack>
                   )}
