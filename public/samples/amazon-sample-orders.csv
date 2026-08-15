@@ -1,0 +1,3 @@
+order id,purchase date,buyer email,buyer name,buyer phone number,sku,product name,quantity purchased,item price,item tax,shipping price,currency,ship address 1,ship address 2,ship city,ship state,ship postal code,ship country,order status
+1001,2026-01-15,jane.doe@example.com,Jane,+1 555-0100,SKU-100,Classic T-Shirt - Medium,2,19.99,5.20,5.99,USD,123 Main St,Apt 4B,Los Angeles,CA,90001,US,Paid
+1001,2026-01-15,jane.doe@example.com,Jane,+1 555-0100,SKU-101,Canvas Tote Bag,1,24.99,5.20,5.99,USD,123 Main St,Apt 4B,Los Angeles,CA,90001,US,Paid

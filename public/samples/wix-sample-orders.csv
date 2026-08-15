@@ -1,0 +1,3 @@
+order number,order date,recipient name,email,phone,address,city,state,zip code,country,sku,item(s),quantity,price,total,payment status
+1001,2026-01-15,Jane,jane.doe@example.com,+1 555-0100,123 Main St,Los Angeles,CA,90001,US,SKU-100,Classic T-Shirt - Medium,2,19.99,76.16,Paid
+1001,2026-01-15,Jane,jane.doe@example.com,+1 555-0100,123 Main St,Los Angeles,CA,90001,US,SKU-101,Canvas Tote Bag,1,24.99,76.16,Paid

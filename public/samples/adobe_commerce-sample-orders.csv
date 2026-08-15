@@ -1,0 +1,3 @@
+order #,purchase date,customer email,bill-to name,grand total (base),status,order currency,shipping and handling,subtotal,shipping address,billing address,sku,qty
+1001,2026-01-15,jane.doe@example.com,Jane,76.16,Paid,USD,5.99,64.97,123 Main St,123 Main St,SKU-100,2
+1001,2026-01-15,jane.doe@example.com,Jane,76.16,Paid,USD,5.99,64.97,123 Main St,123 Main St,SKU-101,1

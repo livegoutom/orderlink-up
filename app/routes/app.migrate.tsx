@@ -33,12 +33,26 @@ export default function MigrateStore() {
                 <Text as="p" variant="bodySm" tone="subdued">
                   {platform.exportHint}
                 </Text>
-                <InlineStack>
+                <InlineStack gap="300">
                   <Button
                     variant="primary"
                     onClick={() => navigate(`/app/imports/new?platform=${platform.id}&mode=paid`)}
                   >
                     Start migration
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Plain-anchor download; Polaris url links go through the client-side
+                      // router, which swallows the download attribute.
+                      const anchor = document.createElement("a");
+                      anchor.href = `/samples/${platform.id}-sample-orders.csv`;
+                      anchor.download = `${platform.id}-sample-orders.csv`;
+                      document.body.appendChild(anchor);
+                      anchor.click();
+                      anchor.remove();
+                    }}
+                  >
+                    Example file
                   </Button>
                 </InlineStack>
               </BlockStack>
