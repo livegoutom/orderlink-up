@@ -4,12 +4,17 @@
 // API returns only Shopify App Pricing contracts... don't treat the app user as unpaid until
 // currentAppInstallation also confirms" - so this is queried IN ADDITION TO, never instead of,
 // the existing billing.check() calls.
-const PARTNER_ORG_ID = "130130154";
-// Confirmed via the Partner Dashboard's GraphiQL Explorer against the real API - App identity in
-// the Partner API uses the "partners" GID namespace, NOT "shopify" (unlike almost everything
-// else). Using gid://shopify/App/... here silently returns no match (no error), so this was easy
-// to get wrong and hard to notice - if this ever needs re-deriving, verify it live in GraphiQL
-// rather than guessing from a dashboard URL again.
+// This is the org ID as it appears in a partners.shopify.com URL specifically (confirmed via
+// direct API test) - e.g. https://partners.shopify.com/2851411/settings/... The newer unified
+// dev.shopify.com/dashboard/{id}/... uses a COMPLETELY DIFFERENT id scheme for the same org
+// (130130154 in this app's case) and does NOT work here - that was the actual root cause of a
+// long-standing "Invalid access token" 401 that had nothing to do with the token itself. If this
+// ever needs re-deriving, read it from the partners.shopify.com address bar, never dev.shopify.com.
+const PARTNER_ORG_ID = "2851411";
+// Confirmed via a direct API call - App identity in the Partner API uses the "partners" GID
+// namespace, NOT "shopify" (unlike almost everything else). Using gid://shopify/App/... here
+// silently returns no match (no error), so this was easy to get wrong and hard to notice - if
+// this ever needs re-deriving, verify it live against the real API rather than guessing.
 const PARTNER_APP_GID = "gid://partners/App/404120436737";
 
 const ACTIVE_SUBSCRIPTION_QUERY = `#graphql
