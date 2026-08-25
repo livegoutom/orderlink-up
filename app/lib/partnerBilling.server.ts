@@ -11,11 +11,13 @@
 // long-standing "Invalid access token" 401 that had nothing to do with the token itself. If this
 // ever needs re-deriving, read it from the partners.shopify.com address bar, never dev.shopify.com.
 const PARTNER_ORG_ID = "2851411";
-// Confirmed via a direct API call - App identity in the Partner API uses the "partners" GID
-// namespace, NOT "shopify" (unlike almost everything else). Using gid://shopify/App/... here
-// silently returns no match (no error), so this was easy to get wrong and hard to notice - if
-// this ever needs re-deriving, verify it live against the real API rather than guessing.
-const PARTNER_APP_GID = "gid://partners/App/404120436737";
+// Confusingly, the Partner API's GID namespace for App identity is inconsistent BETWEEN its own
+// fields: the standalone `app(id:)` query demands "gid://partners/App/...", but this
+// `activeSubscription(appId:)` query demands "gid://shopify/App/..." for the exact same
+// underlying app - confirmed by testing both directly, not assumed. Don't "fix" this to
+// gid://partners/... again without re-testing against the real activeSubscription query
+// specifically, since that mistake (based on testing the wrong field) cost real debugging time.
+const PARTNER_APP_GID = "gid://shopify/App/404120436737";
 
 const ACTIVE_SUBSCRIPTION_QUERY = `#graphql
   query ActiveSubscription($appId: ID!, $shopId: ID!) {
@@ -71,7 +73,12 @@ export async function hasActiveAppPricingSubscription(shopGid: string): Promise<
   // array and no `data` - silently falling through to "no subscription found" here is exactly
   // how a real bug (wrong GID namespace) went unnoticed until a live billing test caught it.
   if (!response.ok || json.errors) {
-    console.error("Partner API activeSubscription query failed:", response.status, json.errors ?? json);
+    // Single string argument, not multiple console.error() args - Railway's log ingestion was
+    // observed truncating multi-arg output at the first newline/array-open, hiding the real
+    // error content and costing real debugging time. Never repeat that mistake here.
+    console.error(
+      `Partner API activeSubscription query failed: status=${response.status} body=${JSON.stringify(json.errors ?? json)}`,
+    );
     return false;
   }
 
