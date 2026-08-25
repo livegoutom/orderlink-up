@@ -5,7 +5,12 @@
 // currentAppInstallation also confirms" - so this is queried IN ADDITION TO, never instead of,
 // the existing billing.check() calls.
 const PARTNER_ORG_ID = "130130154";
-const PARTNER_APP_GID = "gid://shopify/App/404120436737";
+// Confirmed via the Partner Dashboard's GraphiQL Explorer against the real API - App identity in
+// the Partner API uses the "partners" GID namespace, NOT "shopify" (unlike almost everything
+// else). Using gid://shopify/App/... here silently returns no match (no error), so this was easy
+// to get wrong and hard to notice - if this ever needs re-deriving, verify it live in GraphiQL
+// rather than guessing from a dashboard URL again.
+const PARTNER_APP_GID = "gid://partners/App/404120436737";
 
 const ACTIVE_SUBSCRIPTION_QUERY = `#graphql
   query ActiveSubscription($appId: ID!, $shopId: ID!) {
@@ -55,9 +60,16 @@ export async function hasActiveAppPricingSubscription(shopGid: string): Promise<
     },
   );
 
-  if (!response.ok) return false;
-
   const json = await response.json();
+
+  // GraphQL errors (bad auth, bad GID, etc.) commonly come back as HTTP 200 with an `errors`
+  // array and no `data` - silently falling through to "no subscription found" here is exactly
+  // how a real bug (wrong GID namespace) went unnoticed until a live billing test caught it.
+  if (!response.ok || json.errors) {
+    console.error("Partner API activeSubscription query failed:", response.status, json.errors ?? json);
+    return false;
+  }
+
   // A subscription with cancelAtEndOfCycle: true is still active and paid-for through the
   // current billing period - only its NEXT renewal is cancelled, so it still counts as active now.
   const subscription = json.data?.activeSubscription;
