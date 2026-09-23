@@ -64,6 +64,7 @@ export const ORDER_FIELDS: OrderFieldDef[] = [
   { key: "total", label: "Total", section: "Payment & Totals", synonyms: ["total", "order total", "grand total"], description: "Not sent to Shopify — the order total is always computed from its line items plus the shipping line, the same way Shopify computes totals for any order." },
   { key: "discountTotal", label: "Discount Total", section: "Payment & Totals", synonyms: ["discount total", "total discount", "coupon amount"], description: "Not yet applied to created orders — captured in your file but not sent to Shopify. Order-level discount line items aren't built into order creation yet." },
   { key: "financialStatus", label: "Financial Status", section: "Payment & Totals", synonyms: ["financial status", "payment status", "status"], description: "Not currently applied — orders created via the \"Completed orders\" workflow are always marked Paid in Shopify, regardless of what this column contains." },
+  { key: "fulfilled", label: "Fulfilled", section: "Payment & Totals", synonyms: ["fulfilled", "fulfillment status", "is fulfilled", "shipped"], description: "Mark a row \"Yes\" (or \"Y\"/\"True\"/\"1\") to create that order already fulfilled in Shopify — useful for historical orders that were already shipped. Leave blank or \"No\" to create it unfulfilled. Only applies to the \"Completed orders\" workflow; draft orders have no fulfillment status until they're completed." },
 ];
 
 export function normalize(value: string): string {

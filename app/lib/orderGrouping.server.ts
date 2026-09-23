@@ -245,6 +245,11 @@ export function buildOrderPayload(
     orderInput.shippingLines = [{ title: "Shipping", priceSet: moneyBag(shippingCost, currency) }];
   }
 
+  const fulfilledRaw = getCell(first.cells, headers, columnMapping, "fulfilled");
+  if (fulfilledRaw && /^(yes|y|true|1)$/i.test(fulfilledRaw)) {
+    orderInput.fulfillmentStatus = "FULFILLED";
+  }
+
   const createOptions: Record<string, unknown> = {
     sendReceipt: importOptions.sendOrderConfirmation,
     sendFulfillmentReceipt: importOptions.sendFulfillmentEmail,
