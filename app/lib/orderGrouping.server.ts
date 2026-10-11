@@ -14,7 +14,13 @@ export type OrderMode = "draft" | "paid";
 export interface BuildPayloadOptions {
   orderMode: OrderMode;
   shopCurrency: string;
+  // Needed only for rows marked Delivered - orderCreate's fulfillment input requires a location.
+  fulfillmentLocationId?: string | null;
   importOptions?: OrderImportOptions;
+}
+
+function isYes(value: string | undefined): boolean {
+  return Boolean(value && /^(yes|y|true|1)$/i.test(value));
 }
 
 export type OrderPayloadResult =
@@ -245,9 +251,22 @@ export function buildOrderPayload(
     orderInput.shippingLines = [{ title: "Shipping", priceSet: moneyBag(shippingCost, currency) }];
   }
 
-  const fulfilledRaw = getCell(first.cells, headers, columnMapping, "fulfilled");
-  if (fulfilledRaw && /^(yes|y|true|1)$/i.test(fulfilledRaw)) {
+  const delivered = isYes(getCell(first.cells, headers, columnMapping, "delivered"));
+  if (delivered || isYes(getCell(first.cells, headers, columnMapping, "fulfilled"))) {
     orderInput.fulfillmentStatus = "FULFILLED";
+  }
+  if (delivered) {
+    if (!options.fulfillmentLocationId) {
+      return {
+        error:
+          "Can't mark this order Delivered: no store location is available. Reopen the app and approve the updated permissions, then retry.",
+      };
+    }
+    orderInput.fulfillment = {
+      locationId: options.fulfillmentLocationId,
+      shipmentStatus: "DELIVERED",
+      notifyCustomer: importOptions.sendFulfillmentEmail,
+    };
   }
 
   const createOptions: Record<string, unknown> = {

@@ -69,7 +69,7 @@ import {
   parseImportOptions,
   type OrderImportOptions,
 } from "../lib/importOptions";
-import { createDraftOrder, createPaidOrder, getShopCurrency } from "../lib/shopifyOrderCreate.server";
+import { createDraftOrder, createPaidOrder, getPrimaryLocationId, getShopCurrency } from "../lib/shopifyOrderCreate.server";
 import { getPlatformPreset } from "../lib/platformPresets";
 import { detectMappingForPlatform } from "../lib/platformPresets.server";
 
@@ -266,6 +266,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
     if (groupKeys.length > 0) {
       const shopCurrency = await getShopCurrency(admin);
+      const fulfillmentLocationId = columnMapping.delivered ? await getPrimaryLocationId(admin) : null;
       const rowsByGroup = await getRowsForGroups(job.id, groupKeys);
 
       for (const groupKey of groupKeys) {
@@ -281,6 +282,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         const payload = buildOrderPayload(rowsForGrouping, headers, columnMapping, {
           orderMode,
           shopCurrency,
+          fulfillmentLocationId,
           importOptions,
         });
 

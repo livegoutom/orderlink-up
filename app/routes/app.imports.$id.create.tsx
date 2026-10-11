@@ -23,7 +23,7 @@ import {
 } from "../models/orderCreation.server";
 import { buildOrderPayload } from "../lib/orderGrouping.server";
 import { parseImportOptions } from "../lib/importOptions";
-import { createDraftOrder, createPaidOrder, getShopCurrency } from "../lib/shopifyOrderCreate.server";
+import { createDraftOrder, createPaidOrder, getPrimaryLocationId, getShopCurrency } from "../lib/shopifyOrderCreate.server";
 
 // 1 order per ~13s ≈ 4.6/min, safely under Shopify's ~5/min order-creation cap for dev/trial
 // stores. A prior 2-per-13s pacing (~9.2/min) exceeded that cap and caused live "Too many
@@ -96,6 +96,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     if (groupKeys.length > 0) {
       const shopCurrency = await getShopCurrency(admin);
+      const fulfillmentLocationId = columnMapping.delivered ? await getPrimaryLocationId(admin) : null;
       const rowsByGroup = await getRowsForGroups(job.id, groupKeys);
 
       for (const groupKey of groupKeys) {
@@ -111,6 +112,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
         const payload = buildOrderPayload(rowsForGrouping, headers, columnMapping, {
           orderMode,
           shopCurrency,
+          fulfillmentLocationId,
           importOptions: parseImportOptions(job.options, job.suppressNotifications),
         });
 

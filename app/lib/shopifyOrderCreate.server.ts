@@ -88,6 +88,22 @@ export async function getShopCurrency(admin: { graphql: AdminGraphqlClient }): P
   return json.data?.shop?.currencyCode ?? "USD";
 }
 
+// The shop's primary location (needs read_locations). Returns null rather than throwing when the
+// scope hasn't been approved yet, so imports without Delivered rows keep working.
+export async function getPrimaryLocationId(admin: { graphql: AdminGraphqlClient }): Promise<string | null> {
+  try {
+    const response = await admin.graphql(`#graphql
+      query PrimaryLocation {
+        location { id }
+      }
+    `);
+    const json = await response.json();
+    return json.data?.location?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function topLevelErrorsAsUserErrors(json: {
   errors?: { message: string }[];
 }): { field: string[] | null; message: string }[] {
